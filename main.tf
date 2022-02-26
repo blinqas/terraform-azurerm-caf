@@ -33,6 +33,9 @@ provider "azurerm" {
     template_deployment {
       delete_nested_items_during_deletion = false
     }
+    key_vault {
+      purge_soft_delete_on_destroy = var.provider_azurerm_features_keyvault.purge_soft_delete_on_destroy
+    }
   }
 }
 
