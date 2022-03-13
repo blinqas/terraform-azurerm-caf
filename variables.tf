@@ -12,6 +12,13 @@ variable "global_settings" {
   }
 }
 
+variable "provider_azurerm_features_keyvault" {
+  default = {
+    purge_soft_delete_on_destroy = false
+  }
+}
+
+
 variable "client_config" {
   default = {}
 }

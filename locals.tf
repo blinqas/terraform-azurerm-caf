@@ -187,19 +187,19 @@ locals {
     storage_accounts             = local.combined_objects_storage_accounts
   }
 
-  global_settings = merge({
+  global_settings = merge(var.global_settings,{
     default_region     = try(var.global_settings.default_region, "region1")
     environment        = try(var.global_settings.environment, var.environment)
     inherit_tags       = try(var.global_settings.inherit_tags, false)
     passthrough        = try(var.global_settings.passthrough, false)
-    prefix             = try(var.global_settings.prefix, null)
-    prefix_with_hyphen = try(var.global_settings.prefix_with_hyphen, format("%s-", try(var.global_settings.prefix, try(var.global_settings.prefixes[0], random_string.prefix.0.result))))
+    prefix             = try(var.global_settings.prefix, null)    
+    prefix_with_hyphen = try(format("%s-", try(var.global_settings.prefix, null)), var.global_settings.prefix_with_hyphen)
     prefixes           = try(var.global_settings.prefix, null) == "" ? null : try([var.global_settings.prefix], try(var.global_settings.prefixes, [random_string.prefix.0.result]))
     random_length      = try(var.global_settings.random_length, 0)
     regions            = try(var.global_settings.regions, null)
     tags               = try(var.global_settings.tags, null)
     use_slug           = try(var.global_settings.use_slug, true)
-  }, var.global_settings)
+  })
 
   logic_app = {
     integration_service_environment = try(var.logic_app.integration_service_environment, {})
@@ -269,6 +269,7 @@ locals {
     private_dns                                             = try(var.networking.private_dns, {})
     private_dns_vnet_links                                  = try(var.networking.private_dns_vnet_links, {})
     public_ip_addresses                                     = try(var.networking.public_ip_addresses, {})
+    public_ip_prefixes                                      = try(var.networking.public_ip_prefixes, {})
     route_tables                                            = try(var.networking.route_tables, {})
     vhub_peerings                                           = try(var.networking.vhub_peerings, {})
     virtual_hub_connections                                 = try(var.networking.virtual_hub_connections, {})
