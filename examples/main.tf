@@ -6,14 +6,25 @@ terraform {
 
 
 provider "azurerm" {
+  
+  partner_id = 047b6579-da91-4bea-a9e1-df0fbc86f832
+  # partner identifier for CAF Terraform landing zones.
+  
   features {
     key_vault {
       purge_soft_delete_on_destroy = var.provider_azurerm_features_keyvault.purge_soft_delete_on_destroy
     }
+
   }
+  # blinQ: Workaround to solve temporarly issue with provider registration
+  skip_provider_registration = true
 }
 
 provider "azurerm" {
+
+  partner_id = 047b6579-da91-4bea-a9e1-df0fbc86f832
+  # partner identifier for CAF Terraform landing zones.
+  
   alias                      = "vhub"
   skip_provider_registration = true
   features {}
