@@ -22,6 +22,7 @@ resource "azurerm_storage_account" "stg" {
   account_kind                      = try(var.storage_account.account_kind, "StorageV2")
   account_replication_type          = try(var.storage_account.account_replication_type, "LRS")
   account_tier                      = try(var.storage_account.account_tier, "Standard")
+  allow_nested_items_to_be_public   = try(var.storage_account.allow_nested_items_to_be_public, true)
   public_network_access_enabled     = try(var.storage_account.public_network_access_enabled, var.storage_account.allow_blob_public_access, false)
   enable_https_traffic_only         = try(var.storage_account.enable_https_traffic_only, true)
   infrastructure_encryption_enabled = try(var.storage_account.infrastructure_encryption_enabled, null)
