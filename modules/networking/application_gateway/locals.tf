@@ -28,7 +28,7 @@ locals {
             name        = config.name
             request_key = request_key
             app_key     = app_key
-            rule        = value
+            rule        = value            
           }
         ]
       ]

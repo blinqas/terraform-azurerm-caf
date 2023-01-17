@@ -81,10 +81,10 @@ variable "zones" {
   type        = list(string)
   default     = null
 
-  validation {
-    condition     = contains(["1", "2", "3"], var.zones)
-    error_message = "Provide an allowed value as defined in https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip#availability_zone."
-  }
+  #validation {
+  #  condition     = contains(["1", "2", "3"], var.zones)
+  #  error_message = "Provide an allowed value as defined in https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip#availability_zone."
+  #}
 }
 
 variable "diagnostics" {

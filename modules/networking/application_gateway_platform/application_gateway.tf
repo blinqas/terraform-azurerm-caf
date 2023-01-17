@@ -180,7 +180,8 @@ resource "azurerm_application_gateway" "agw" {
   }
 
   dynamic "ssl_certificate" {
-    for_each = can(var.settings.default.ssl_cert_key) ? [1] : []
+    # for_each = can(var.settings.default.ssl_cert_key) ? [1] : [] blinQ: Replaced this not tested
+    for_each = can(data.azurerm_key_vault_certificate.manual_certs[var.settings.default.ssl_cert_key]) ? [1] : []
 
     content {
       name                = var.settings.ssl_certs[var.settings.default.ssl_cert_key].name
