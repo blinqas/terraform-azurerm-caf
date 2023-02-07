@@ -1,41 +1,27 @@
-
-#
-# Use keyvault for vm admin_username and admin_password, this can be convinient if you work with locked down 3rd party appliances who not support ssh keys (recomended to use ssh keys when possible)
+# Use keyvault for vm admin_username and admin_password
 # Keyvault can be in remote state and in a different subscription, ex security landing zone subscription
-#
 
 locals {
-  # To shorten the addresses used in the logic
-  vm_settings      = try(var.settings.virtual_machine_settings, {})
-  os_settings      = try(var.settings.virtual_machine_settings[var.settings.os_type], "")
-  admin_user_kv    = try(var.settings.virtual_machine_settings[var.settings.os_type].admin_user_keyvault, {})
-  creation_secrets = try(var.settings.virtual_machine_settings[var.settings.os_type].admin_user_keyvault.creation_secrets, {})
-  password_policy  = try(var.settings.virtual_machine_settings[var.settings.os_type].admin_user_keyvault.creation_secrets.admin_password_policy, {})
-  # Use keyvault for admin_username and admin_password? True only if vm_settings.admin_user not defined and admin_user_keyvault.key is defined
-  # use_kv_for_admin_user = (can(local.os_settings.admin_password) == false) && can(local.os_settings.admin_user_keyvault.key)
-  use_kv_for_admin_user = !(local.os_settings.disable_password_authentication) && can(local.os_settings.admin_user_keyvault.key)
-  # Create admin_user kv secret only if admin_user_keyvault.creation_secrets.admin_user is defined
+  # Shorten address
+  vm_settings                   = try(var.settings.virtual_machine_settings, {})
+  os_settings                   = try(var.settings.virtual_machine_settings[var.settings.os_type], "")
+  admin_user_kv                 = try(var.settings.virtual_machine_settings[var.settings.os_type].admin_user_keyvault, {})
+  creation_secrets              = try(var.settings.virtual_machine_settings[var.settings.os_type].admin_user_keyvault.creation_secrets, {})
+  password_policy               = try(var.settings.virtual_machine_settings[var.settings.os_type].admin_user_keyvault.creation_secrets.admin_password_policy, {})
+  use_kv_for_admin_user         = !(local.os_settings.disable_password_authentication) && can(local.os_settings.admin_user_keyvault.key)
   create_secrets_for_admin_user = (local.use_kv_for_admin_user) && (can(local.os_settings.admin_username) || can(local.creation_secrets.admin_username))
-  # Kv can be local or remote and addressed through virtual_machine_settings.keyvault.key or os_settings.admin_user_keyvault.key
-  kv_to_use         = var.keyvaults[try(local.os_settings.admin_user_keyvault.lz_key, var.client_config.landingzone_key)][try(local.os_settings.admin_user_keyvault.key, local.vm_settings.keyvault)]
-  use_secret_prefix = try(local.admin_user_kv.prefix_secret_names_with_vm_name, false)
+  kv_to_use                     = var.keyvaults[try(local.os_settings.admin_user_keyvault.lz_key, var.client_config.landingzone_key)][try(local.os_settings.admin_user_keyvault.key, local.vm_settings.keyvault)]
+  use_secret_prefix             = try(local.admin_user_kv.prefix_secret_names_with_vm_name, false)
 
-  # Existing secret in keyvault overrule os_settings.admin_username, who overrule creation_secrets.admin_username.
-  admin_username_linux = try(data.azurerm_key_vault_secret.admin_username.0.value,
-    local.os_settings.admin_username,
-  local.creation_secrets.admin_username, null)
+  # Existing keyvault secret overrule others
+  admin_username_linux = try(data.azurerm_key_vault_secret.admin_username.0.value, local.os_settings.admin_username, local.creation_secrets.admin_username, null)
+  admin_password_linux = try(data.azurerm_key_vault_secret.admin_password.0.value, local.os_settings.admin_password, local.creation_secrets.admin_password, null)
 
-  # Existing secret in keyvault overrule os_settings.admin_password, who overrule creation_secrets.admin_password, who overrule the random_password generated when none value is configured
-  admin_password_linux = try(data.azurerm_key_vault_secret.admin_password.0.value,
-    local.os_settings.admin_password,
-    local.creation_secrets.admin_password,
-  azurerm_key_vault_secret.admin_password_resource.0.value, null)
-
-  # Preparations to easy adopt the same logic for windows servers
+  # Windows or Linux
   admin_username = local.os_type == "windows" ? local.admin_username_windows : local.admin_username_linux
   admin_password = local.os_type == "windows" ? local.admin_password_windows : local.admin_password_linux
 
-  # Secret names prefixed with computer_name to support multiple vm secrets in the same keyvault
+  # Prefix secret names with vm name
   secret_names = (local.use_secret_prefix) ? {
     user = try(
       format("%s-admin-username", azurecaf_name.linux_computer_name[local.os_type].result),
@@ -79,16 +65,22 @@ locals {
 }
 
 data "azurerm_key_vault_secret" "admin_username" {
-  count = local.create_secrets_for_admin_user && local.secret_exists_admin_username ? 1 : 0
-  key_vault_id = local.kv_to_use.id
+  depends_on = [
+    azurerm_key_vault_secret.admin_username_resource
+  ]
+  count        = local.create_secrets_for_admin_user ? 1 : 0
   name         = local.secret_names.user
+  key_vault_id = local.kv_to_use.id
 }
 
 # Use existing keyvault secret for admin_password
 data "azurerm_key_vault_secret" "admin_password" {
-  count = local.create_secrets_for_admin_user && local.secret_exists_admin_password ? 1 : 0
-  key_vault_id = local.kv_to_use.id
+  depends_on = [
+    azurerm_key_vault_secret.admin_password_resource
+  ]
+  count        = local.create_secrets_for_admin_user ? 1 : 0
   name         = local.secret_names.password
+  key_vault_id = local.kv_to_use.id
 }
 
 # If admin_password not defined in tfvars configuration, this random password will be used instead
@@ -107,30 +99,40 @@ resource "random_password" "admin_password" {
   min_special = try(local.password_policy.min_special, 1)
 }
 
+# Random id is used as secret name if secret allready exist
+resource "random_id" "admin_username" {
+  prefix      = "dummy-secret-"
+  byte_length = 8
+}
+
 # Create new keyvault secret for admin_username
 resource "azurerm_key_vault_secret" "admin_username_resource" {
-  count = local.create_secrets_for_admin_user && !(local.secret_exists_admin_username) ? 1 : 0
-  name  = local.secret_names.user
+  # count = local.create_secrets_for_admin_user && !(can(data.azurerm_key_vault_secret.admin_username[local.secret_names.user].value)) ? 1 : 0
+  name = local.secret_exists_admin_username ? random_id.admin_username.id : local.secret_names.user
   # Username from keyvault overrule configuration, os_settings.admin_username overrule os_settings.creation_secrets.admin_username
-  value        = try(data.azurerm_key_vault_secret.admin_username.0.value, local.os_settings.admin_username, local.creation_secrets.admin_username)
+  value        = try(local.os_settings.admin_username, local.creation_secrets.admin_username)
   key_vault_id = local.kv_to_use.id
 
   lifecycle {
-    prevent_destroy = true
     ignore_changes  = [value, key_vault_id]
   }
 }
 
+# Random id is used as secret name if secret allready exist
+resource "random_id" "admin_password" {
+  prefix      = "dummy-secret-"
+  byte_length = 8
+}
+
 # Create new keyvault secret for admin_password
 resource "azurerm_key_vault_secret" "admin_password_resource" {
-  count = local.create_secrets_for_admin_user && !(local.secret_exists_admin_password) ? 1 : 0
-  name  = local.secret_names.password
+  # count = local.create_secrets_for_admin_user && !(can(data.azurerm_key_vault_secret.admin_password[local.secret_names.password].value)) ? 1 : 0
+  name = local.secret_exists_admin_password ? random_id.admin_password.id : local.secret_names.password
   # If keyvault allready have a admin_password this will overrule tfvar configuration, os_settings.admin_password overrule os_settings.creation_secrets.admin_password who overrule the random_password
-  value        = try(data.azurerm_key_vault_secret.admin_password.0.value, local.creation_secrets.admin_password, random_password.admin_password.result)
+  value        = try(local.creation_secrets.admin_password, random_password.admin_password.result)
   key_vault_id = local.kv_to_use.id
 
   lifecycle {
-    prevent_destroy = true
     ignore_changes  = [value, key_vault_id]
   }
 }
