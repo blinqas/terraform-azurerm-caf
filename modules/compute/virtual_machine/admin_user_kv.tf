@@ -64,6 +64,7 @@ locals {
   secret_exists_admin_password = contains(data.azurerm_key_vault_secrets.admin_user.names, local.secret_names.password)
 }
 
+# Always create data entity for the real admin_username secret
 data "azurerm_key_vault_secret" "admin_username" {
   depends_on = [
     azurerm_key_vault_secret.admin_username_resource
@@ -73,7 +74,7 @@ data "azurerm_key_vault_secret" "admin_username" {
   key_vault_id = local.kv_to_use.id
 }
 
-# Use existing keyvault secret for admin_password
+# Always create data entity for the real admin_password secret
 data "azurerm_key_vault_secret" "admin_password" {
   depends_on = [
     azurerm_key_vault_secret.admin_password_resource
@@ -83,7 +84,7 @@ data "azurerm_key_vault_secret" "admin_password" {
   key_vault_id = local.kv_to_use.id
 }
 
-# If admin_password not defined in tfvars configuration, this random password will be used instead
+# If admin_password not defined in tfvars configuration, a random password will be used
 resource "random_password" "admin_password" {
   /*keepers = {
     frequency = time_rotating.key.0.rotation_rfc3339
