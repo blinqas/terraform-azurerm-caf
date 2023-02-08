@@ -26,7 +26,7 @@ module "azurerm_firewall_policies_child" {
 
   base_policy_id = can(each.value.base_policy.id) ? each.value.base_policy.id : local.combined_objects_azurerm_firewall_policies[try(each.value.base_policy.lz_key, local.client_config.landingzone_key)][each.value.base_policy.key].id
 
-  resource_group = can(each.value.resource_group.id) ? each.value.resource_group.id : local.combined_objects_resource_groups[try(each.value.lz_key, local.client_config.landingzone_key)][try(each.value.resource_group_key, each.value.resource_group.key)]
+  resource_group = can(each.value.resource_group.id) ? each.value.resource_group.id : local.combined_objects_resource_groups[try(each.value.lz_key, each.value.resource_group.lz_key, local.client_config.landingzone_key)][try(each.value.resource_group_key, each.value.resource_group.key)].id
 }
 
 
