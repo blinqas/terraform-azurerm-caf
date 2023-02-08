@@ -109,9 +109,9 @@ resource "random_id" "admin_username" {
 # Create new keyvault secret for admin_username
 resource "azurerm_key_vault_secret" "admin_username_resource" {
   # count = local.create_secrets_for_admin_user && !(can(data.azurerm_key_vault_secret.admin_username[local.secret_names.user].value)) ? 1 : 0
-  name = local.secret_exists_admin_username ? random_id.admin_username.id : local.secret_names.user
+  name = local.secret_exists_admin_username ? random_id.admin_username.dec : local.secret_names.user
   # Username from keyvault overrule configuration, os_settings.admin_username overrule os_settings.creation_secrets.admin_username
-  value        = try(local.os_settings.admin_username, local.creation_secrets.admin_username)
+  value        = local.secret_exists_admin_username ? "terraform-dummy-secret" : try(local.os_settings.admin_username, local.creation_secrets.admin_username)
   key_vault_id = local.kv_to_use.id
 
   lifecycle {
@@ -128,12 +128,14 @@ resource "random_id" "admin_password" {
 # Create new keyvault secret for admin_password
 resource "azurerm_key_vault_secret" "admin_password_resource" {
   # count = local.create_secrets_for_admin_user && !(can(data.azurerm_key_vault_secret.admin_password[local.secret_names.password].value)) ? 1 : 0
-  name = local.secret_exists_admin_password ? random_id.admin_password.id : local.secret_names.password
+  name = local.secret_exists_admin_password ? random_id.admin_password.dec : local.secret_names.password
   # If keyvault allready have a admin_password this will overrule tfvar configuration, os_settings.admin_password overrule os_settings.creation_secrets.admin_password who overrule the random_password
-  value        = try(local.creation_secrets.admin_password, random_password.admin_password.result)
+  value        = local.secret_exists_admin_password ? "terraform-dummy-secret" : try(local.creation_secrets.admin_password, random_password.admin_password.result)
   key_vault_id = local.kv_to_use.id
 
   lifecycle {
     ignore_changes  = [value, key_vault_id]
   }
 }
+
+# Will consider to create a null_resource who delete the dummy secrets with az cli
