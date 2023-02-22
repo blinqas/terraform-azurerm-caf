@@ -18,7 +18,7 @@ module "storage_accounts" {
   private_endpoints         = try(each.value.private_endpoints, {})
   recovery_vaults           = local.combined_objects_recovery_vaults
   resource_group_name       = can(each.value.resource_group.name) || can(each.value.resource_group_name) ? try(each.value.resource_group.name, each.value.resource_group_name) : local.combined_objects_resource_groups[try(each.value.resource_group.lz_key, local.client_config.landingzone_key)][try(each.value.resource_group_key, each.value.resource_group.key)].name
-  resource_groups           = try(each.value.private_endpoints, {}) == {} ? null : local.resource_groups
+  resource_groups           = try(each.value.private_endpoints, {}) == {} ? null : local.combined_objects_resource_groups
   storage_account           = each.value
   vnets                     = local.combined_objects_networking
 }
