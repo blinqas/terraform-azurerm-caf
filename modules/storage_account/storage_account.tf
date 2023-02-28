@@ -14,7 +14,7 @@ resource "azurecaf_name" "stg" {
   use_slug      = try(var.storage_account.azurecaf.use_slug, var.global_settings.use_slug)
 }
 
-# Tested with :  AzureRM version 3.44.1
+# Tested with :  AzureRM version 3.45
 # Ref : https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/storage_account
 
 resource "azurerm_storage_account" "stg" {
@@ -49,8 +49,8 @@ resource "azurerm_storage_account" "stg" {
     for_each = can(var.storage_account.customer_managed_key) ? [1] : []
 
     content {
-      key_vault_key_id         = var.storage_account.customer_managed_key.key_vault_key_id  # Update root module
-      use_assigned_identity_id = try(var.storage_account.custom_domain.use_subdomain, null) # Update root module
+      key_vault_key_id          = var.storage_account.customer_managed_key.key_vault_key_id                     # Update root module
+      user_assigned_identity_id = try(var.storage_account.customer_managed_key.user_assigned_identity_id, null) # Update root module
     }
   }
 
@@ -64,51 +64,51 @@ resource "azurerm_storage_account" "stg" {
   }
 
   dynamic "blob_properties" {
-    for_each = can(var.storage_account.blob_properties) ? [1] : [0]
+    for_each = can(var.storage_account.blob_properties) ? [1] : []
 
-    conetent {
+    content {
 
       dynamic "cors_rule" {
-        for_each = can(var.storage_account.blob_properties.cors_rule) ? [1] : [0]
+        for_each = can(var.storage_account.blob_properties.cors_rule) ? [1] : []
 
         content {
-          allowed_headers    = var.storage_account.blob_properties.cors_rule.allowed_headers
-          allowed_methods    = var.storage_account.blob_properties.cors_rule.allowed_methods
-          allowed_origins    = var.storage_account.blob_properties.cors_rule.allowed_origins
-          exposed_headers    = var.storage_account.blob_properties.cors_rule.exposed_headers
-          max_age_in_seconds = var.storage_account.blob_properties.cors_rule.max_age_in_seconds
+          allowed_headers    = try(var.storage_account.blob_properties.cors_rule.allowed_headers, null)
+          allowed_methods    = try(var.storage_account.blob_properties.cors_rule.allowed_methods, null)
+          allowed_origins    = try(var.storage_account.blob_properties.cors_rule.allowed_origins, null)
+          exposed_headers    = try(var.storage_account.blob_properties.cors_rule.exposed_headers, null)
+          max_age_in_seconds = try(var.storage_account.blob_properties.cors_rule.max_age_in_seconds, null)
         }
       }
 
       dynamic "delete_retention_policy" {
-        for_each = can(var.storage_account.blob_properties.delete_retention_policy) ? [1] : [0]
+        for_each = can(var.storage_account.blob_properties.delete_retention_policy) ? [1] : []
 
         content {
-          days = var.storage_account.blob_properties.delete_retention_policy.days
+          days = try(var.storage_account.blob_properties.delete_retention_policy.days, null)
         }
       }
 
       dynamic "restore_policy" {
         for_each = (can(var.storage_account.blob_properties.restore_policy) &&
           can(var.storage_account.blob_properties.delete_retention_policy.days) &&
-        var.storage_account.blob_properties.versioning_enabled) ? [1] : [0]
+        var.storage_account.blob_properties.versioning_enabled) ? [1] : []
 
         content {
-          days = var.storage_account.blob_properties.restore_policy.days
+          days = try(var.storage_account.blob_properties.restore_policy.days, null)
         }
       }
 
       versioning_enabled            = try(var.storage_account.blob_properties.versioning_enabled, false)
       change_feed_enabled           = try(var.storage_account.blob_properties.change_feed_enabled, false)
       change_feed_retention_in_days = try(var.storage_account.blob_properties.change_feed_retention_in_days, null)
-      default_service_version       = try(var.storage_account.blob_properties.default_service_version, null)
+      default_service_version       = try(var.storage_account.blob_properties.default_service_version, "2020-06-12")
       last_access_time_enabled      = try(var.storage_account.blob_properties.last_access_time_enabled, false)
 
       dynamic "container_delete_retention_policy" {
-        for_each = can(var.storage_account.blob_properties.container_delete_retention_policy) ? [1] : [0]
+        for_each = can(var.storage_account.blob_properties.container_delete_retention_policy) ? [1] : []
 
         content {
-          days = var.storage_account.blob_properties.container_delete_retention_policy.days
+          days = try(var.storage_account.blob_properties.container_delete_retention_policy.days, null)
         }
       }
 
@@ -123,11 +123,11 @@ resource "azurerm_storage_account" "stg" {
         for_each = can(var.storage_account.queue_properties.cors_rule) ? [1] : []
 
         content {
-          allowed_headers    = var.storage_account.queue_properties.cors_rule.allowed_headers
-          allowed_methods    = var.storage_account.queue_properties.cors_rule.allowed_methods
-          allowed_origins    = var.storage_account.queue_properties.cors_rule.allowed_origins
-          exposed_headers    = var.storage_account.queue_properties.cors_rule.exposed_headers
-          max_age_in_seconds = var.storage_account.queue_properties.cors_rule.max_age_in_seconds
+          allowed_headers    = try(var.storage_account.queue_properties.cors_rule.allowed_headers, null)
+          allowed_methods    = try(var.storage_account.queue_properties.cors_rule.allowed_methods, null)
+          allowed_origins    = try(var.storage_account.queue_properties.cors_rule.allowed_origins, null)
+          exposed_headers    = try(var.storage_account.queue_properties.cors_rule.exposed_headers, null)
+          max_age_in_seconds = try(var.storage_account.queue_properties.cors_rule.max_age_in_seconds, null)
         }
       }
 
@@ -135,10 +135,10 @@ resource "azurerm_storage_account" "stg" {
         for_each = can(var.storage_account.queue_properties.logging) ? [1] : []
 
         content {
-          delete                = var.storage_account.queue_properties.logging.delete
-          read                  = var.storage_account.queue_properties.logging.read
-          version               = var.storage_account.queue_properties.logging.version
-          write                 = var.storage_account.queue_properties.logging.write
+          delete                = try(var.storage_account.queue_properties.logging.delete, null)
+          read                  = try(var.storage_account.queue_properties.logging.read, null)
+          version               = try(var.storage_account.queue_properties.logging.version, null)
+          write                 = try(var.storage_account.queue_properties.logging.write, null)
           retention_policy_days = try(var.storage_account.queue_properties.logging.retention_policy_days, null)
         }
       }
@@ -147,8 +147,8 @@ resource "azurerm_storage_account" "stg" {
         for_each = can(var.storage_account.queue_properties.minute_metrics) ? [1] : []
 
         content {
-          enabled               = var.storage_account.queue_properties.minute_metrics.enabled
-          version               = var.storage_account.queue_properties.minute_metrics.version
+          enabled               = try(var.storage_account.queue_properties.minute_metrics.enabled, null)
+          version               = try(var.storage_account.queue_properties.minute_metrics.version, null)
           include_apis          = try(var.storage_account.queue_properties.minute_metrics.include_apis, null)
           retention_policy_days = try(var.storage_account.queue_properties.minute_metrics.retention_policy_days, null)
         }
@@ -158,8 +158,8 @@ resource "azurerm_storage_account" "stg" {
         for_each = can(var.storage_account.queue_properties.hour_metrics) ? [1] : []
 
         content {
-          enabled               = var.storage_account.queue_properties.hour_metrics.enabled
-          version               = var.storage_account.queue_properties.hour_metrics.version
+          enabled               = try(var.storage_account.queue_properties.hour_metrics.enabled, null)
+          version               = try(var.storage_account.queue_properties.hour_metrics.version, null)
           include_apis          = try(var.storage_account.queue_properties.hour_metrics.include_apis, null)
           retention_policy_days = try(var.storage_account.queue_properties.hour_metrics.retention_policy_days, null)
         }
