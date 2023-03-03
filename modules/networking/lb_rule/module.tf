@@ -3,11 +3,11 @@
 resource "azurecaf_name" "lb" {
   name          = var.settings.name
   resource_type = "azurerm_data_factory" #"azurerm_lb_rule"
-  prefixes      = var.global_settings.prefixes
-  random_length = var.global_settings.random_length
+  prefixes      = try(var.settings.azurecaf_name.prefixes, var.global_settings.prefixes)
+  random_length = try(var.settings.azurecaf_name.random_length, var.global_settings.random_length)
   clean_input   = true
-  passthrough   = var.global_settings.passthrough
-  use_slug      = var.global_settings.use_slug
+  passthrough   = try(var.settings.azurecaf_name.passthrough, var.global_settings.passthrough)
+  use_slug      = try(var.settings.azurecaf_name.use_slug, var.global_settings.use_slug)
 }
 resource "azurerm_lb_rule" "lb" {
   name                           = azurecaf_name.lb.result
