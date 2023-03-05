@@ -15,7 +15,7 @@ resource "azurerm_lb" "lb" {
   location            = var.location
 
   dynamic "frontend_ip_configuration" {
-    for_each = try(var.settings.frontend_ip_configuration, null) != null ? [var.settings.frontend_ip_configuration] : []
+    for_each = can(var.settings.frontend_ip_configurations) ? var.settings.frontend_ip_configurations : {}
     content {
       name                                               = try(frontend_ip_configuration.value.name, null)
       zones                                              = try(frontend_ip_configuration.value.zones, frontend_ip_configuration.value.availability_zone, null)

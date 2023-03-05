@@ -63,11 +63,6 @@ variable "zones" {
   description = "(Optional) The availability zones to allocate the Public IP in. Possible values are 1, 2, 3. Defaults to null."
   type        = list(string)
   default     = null
-
-  #validation {
-  #  condition     = contains(["1", "2", "3"], var.zones)
-  #  error_message = "Provide an allowed value as defined in https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip#availability_zone."
-  #}
 }
 
 variable "diagnostics" {

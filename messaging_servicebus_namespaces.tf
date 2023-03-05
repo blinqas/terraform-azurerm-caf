@@ -7,7 +7,7 @@ module "servicebus_namespaces" {
   client_config   = local.client_config
   settings        = each.value
 
-  resource_groups = local.combined_objects_resource_groups
+  resource_groups = can(each.value.private_endpoints) ? local.resource_groups : null
 
   remote_objects = {
     resource_groups = local.combined_objects_resource_groups
