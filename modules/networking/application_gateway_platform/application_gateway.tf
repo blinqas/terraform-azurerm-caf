@@ -58,11 +58,11 @@ resource "azurerm_application_gateway" "agw" {
       dynamic "ssl_policy" {
         for_each = try(ssl_profile.value.ssl_policy, null) == null ? [] : [1]
         content {
-          disabled_protocols   = try(ssl_policy.value.disabled_protocols, null)
-          policy_type          = try(ssl_policy.value.policy_type, null)
-          policy_name          = try(ssl_policy.value.policy_name, null)
-          cipher_suites        = try(ssl_policy.value.cipher_suites, null)
-          min_protocol_version = try(ssl_policy.value.min_protocol_version, null)
+          disabled_protocols   = try(ssl_profile.value.ssl_policy.disabled_protocols, null)
+          policy_type          = try(ssl_profile.value.ssl_policy.policy_type, null)
+          policy_name          = try(ssl_profile.value.ssl_policy.policy_name, null)
+          cipher_suites        = try(ssl_profile.value.ssl_policy.cipher_suites, null)
+          min_protocol_version = try(ssl_profile.value.ssl_policy.min_protocol_version, null)
         }
       }
     }
@@ -70,6 +70,7 @@ resource "azurerm_application_gateway" "agw" {
 
   dynamic "ssl_policy" {
     for_each = try(var.settings.listener_ssl_policy, {})
+    #        for_each = try(var.settings.listener_ssl_policy, null) == null ? [] : [1]
     content {
       disabled_protocols   = try(ssl_policy.value.disabled_protocols, null)
       policy_type          = try(ssl_policy.value.policy_type, null)
