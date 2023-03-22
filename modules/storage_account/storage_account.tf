@@ -45,6 +45,7 @@ resource "azurerm_storage_account" "stg" {
     }
   }
 
+  /* blinQ: legacy - dedicated resource in terraform azurerm 3.47
   dynamic "customer_managed_key" {
     for_each = can(var.storage_account.customer_managed_key) ? [1] : []
 
@@ -52,7 +53,7 @@ resource "azurerm_storage_account" "stg" {
       key_vault_key_id          = var.storage_account.customer_managed_key.key_vault_key_id                     # Update root module
       user_assigned_identity_id = try(var.storage_account.customer_managed_key.user_assigned_identity_id, null) # Update root module
     }
-  }
+  }*/
 
   dynamic "identity" {
     for_each = can(var.storage_account.identity) ? [var.storage_account.identity] : []
