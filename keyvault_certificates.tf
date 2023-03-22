@@ -5,7 +5,7 @@ module "keyvault_certificates" {
   for_each = local.security.keyvault_certificates
 
   settings = each.value
-  keyvault = local.combined_objects_keyvaults[try(each.value.lz_key, local.client_config.landingzone_key)][each.value.keyvault_key]
+  keyvault = local.combined_objects_keyvaults[try(each.value.keyvault.lz_key, each.value.lz_key, local.client_config.landingzone_key)][try(each.value.keyvault.key, each.value.keyvault_key)]
 }
 
 output "keyvault_certificates" {
