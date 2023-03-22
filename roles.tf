@@ -68,8 +68,8 @@ data "azurerm_management_group" "level" {
   for_each = {
     for key, value in try(var.role_mapping.built_in_role_mapping.management_group, {}) : key => value
   }
-
-  name = lower(each.key) == "root" ? data.azurerm_client_config.current.tenant_id : each.key
+  name = lower(each.key) == "root" ? data.azurerm_client_config.current.tenant_id : null
+  display_name = lower(each.key) == "root" ? null : each.key
 }
 
 locals {
@@ -79,8 +79,8 @@ locals {
       (var.current_landingzone_key) = {
         for key, value in try(module.aks_clusters, {}) :
         key => {
-          rbac_id = value.addon_profile[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id
-        } if can(value.addon_profile[0].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id)
+          rbac_id = can(value.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id) ? value.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id : null
+        } 
       }
     }
   )
