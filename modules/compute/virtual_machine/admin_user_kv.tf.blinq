@@ -8,7 +8,8 @@ locals {
   admin_user_kv                 = try(var.settings.virtual_machine_settings[var.settings.os_type].admin_user_keyvault, {})
   creation_secrets              = try(var.settings.virtual_machine_settings[var.settings.os_type].admin_user_keyvault.creation_secrets, {})
   password_policy               = try(var.settings.virtual_machine_settings[var.settings.os_type].admin_user_keyvault.creation_secrets.admin_password_policy, {})
-  use_kv_for_admin_user         = !(local.os_settings.disable_password_authentication) && can(local.os_settings.admin_user_keyvault.key)
+  # Confirm keyvault usage
+  use_kv_for_admin_user         = !(try(local.os_settings.disable_password_authentication, false)) && can(local.os_settings.admin_user_keyvault.key)
   create_secrets_for_admin_user = (local.use_kv_for_admin_user) && (can(local.os_settings.admin_username) || can(local.creation_secrets.admin_username))
   kv_to_use                     = var.keyvaults[try(local.os_settings.admin_user_keyvault.lz_key, var.client_config.landingzone_key)][try(local.os_settings.admin_user_keyvault.key, local.vm_settings.keyvault)]
   use_secret_prefix             = try(local.admin_user_kv.prefix_secret_names_with_vm_name, false)

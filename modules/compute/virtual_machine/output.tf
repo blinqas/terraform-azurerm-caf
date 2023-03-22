@@ -79,6 +79,6 @@ output "os_disk_id" {
   value = data.azurerm_managed_disk.os_disk.id
 }
 
-output "debug" {
-  value = local.debug
-}
+#output "debug" {
+#  value = local.debug
+#}
