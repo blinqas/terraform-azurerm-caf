@@ -144,6 +144,29 @@ module "managed_identity" {
   )
 }
 
+module "aks_application_gateway_ingress_controller_identity" {
+  source = "./access_policy"
+  for_each = {
+    for key, access_policy in var.access_policies : key => access_policy
+    if try(access_policy.aks_key, null) != null
+  }
+
+  keyvault_id = coalesce(
+    var.keyvault_id,
+    try(var.keyvaults[each.value.keyvault_lz_key][var.keyvault_key].id, null),
+    try(var.keyvaults[var.client_config.landingzone_key][var.keyvault_key].id, null),
+    try(var.keyvaults[each.value.lz_key][var.keyvault_key].id, null) // For backward compatibility
+  )
+
+  access_policy = each.value
+  tenant_id     = var.client_config.tenant_id
+
+  object_id = coalesce(
+    try(var.resources.aks_agic_ingress_identity[each.value.lz_key][each.value.aks_key].rbac_id,
+    var.resources.aks_clusters[each.value.lz_key][each.value.aks_key].ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id, null)
+  )
+}
+
 module "mssql_managed_instance" {
   source = "./access_policy"
   for_each = {
