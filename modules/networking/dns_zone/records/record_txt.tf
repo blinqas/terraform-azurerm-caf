@@ -11,7 +11,7 @@ resource "azurerm_dns_txt_record" "txt" {
     for_each = each.value.records
 
     content {
-      value = record.value.value
+      value = record.value
     }
   }
 }
