@@ -267,6 +267,11 @@ variable "keyvault_access_policies_azuread_apps" {
   default     = {}
 }
 
+variable "keyvault_access_policies_aks_agic_ingress" {
+  description = "Configuration object - Azure Key Vault policy for azure AKS AGIC Ingress identities"
+  default = {}
+}
+
 variable "custom_role_definitions" {
   description = "Configuration object - Custom role definitions"
   default     = {}
