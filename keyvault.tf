@@ -57,6 +57,21 @@ module "keyvault_access_policies_azuread_apps" {
   azuread_apps    = local.combined_objects_azuread_apps
 }
 
+module "keyvault_access_policies_aks_agic_ingress" {
+  source   = "./modules/security/keyvault_access_policies"
+  for_each = var.keyvault_access_policies_aks_agic_ingress
+
+  keyvault_key    = each.key
+  keyvaults       = local.combined_objects_keyvaults
+  access_policies = each.value
+  client_config   = local.client_config
+
+  resources = {
+    aks_clusters = local.combined_objects_aks_clusters
+    aks_agic_ingress_identity = local.aks_ingress_application_gateway_identities
+  }
+  
+}
 
 output "keyvaults" {
   value = module.keyvaults
