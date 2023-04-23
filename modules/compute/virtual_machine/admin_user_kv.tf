@@ -19,8 +19,8 @@ locals {
   admin_password_linux = try(data.azurerm_key_vault_secret.admin_password.0.value, local.os_settings.admin_password, local.creation_secrets.admin_password, null)
 
   # Windows or Linux
-  admin_username = local.os_type == "windows" ? local.admin_username_windows : local.admin_username_linux
-  admin_password = local.os_type == "windows" ? local.admin_password_windows : local.admin_password_linux
+  #admin_username = local.os_type == "windows" ? local.admin_username_windows : local.admin_username_linux
+  #admin_password = local.os_type == "windows" ? local.admin_password_windows : local.admin_password_linux
 
   # Prefix secret names with vm name
   secret_names = (local.use_secret_prefix) ? {

@@ -18,7 +18,8 @@ output "internal_fqdns" {
 }
 
 output "admin_username" {
-  value       = try(local.admin_username, null) == null ? var.settings.virtual_machine_settings[local.os_type].admin_username : local.admin_username
+  value       = lower(local.os_type) == "linux" ? local.admin_username_linux : can(local.admin_username) ? local.admin_username : null
+  #try(local.admin_username, null) == null ? var.settings.virtual_machine_settings[local.os_type].admin_username : local.admin_username
   description = "Local admin username"
 }
 
