@@ -1,4 +1,7 @@
 variable "group_object_id" {}
+variable "azuread_groups" {
+  default = {}
+}
 variable "member_object_id" {
   default = null
 }

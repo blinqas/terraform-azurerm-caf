@@ -1,3 +1,10 @@
+resource "azuread_group_member" "groups" {
+  for_each = var.azuread_groups != {} ? toset(try(var.members.keys, [])) : []
+
+  group_object_id  = var.group_object_id
+  member_object_id = var.azuread_groups[each.key].id
+}
+
 resource "azuread_group_member" "ids" {
   for_each = var.azuread_service_principals != {} ? toset(try(var.members.keys, [])) : []
 

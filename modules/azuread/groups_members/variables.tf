@@ -6,6 +6,9 @@ variable "client_config" {}
 variable "group_key" {
   default = null
 }
+variable "group_lz_key" {
+  default = null
+}
 variable "azuread_groups" {
   default = {}
 }

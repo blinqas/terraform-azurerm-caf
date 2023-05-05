@@ -2,6 +2,15 @@
 # Process membership for var.azuread_groups_membership
 #
 
+module "azuread_groups_membership" {
+  source   = "./membership"
+  for_each = try(var.settings.azuread_groups, {})
+
+  azuread_groups  = var.azuread_groups[try(each.value.lz_key, var.client_config.landingzone_key)]
+  members         = each.value
+  group_object_id = var.group_id
+}
+
 module "azuread_service_principals_membership" {
   source   = "./membership"
   for_each = try(var.settings.azuread_service_principals, {})
