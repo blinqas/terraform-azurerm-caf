@@ -269,7 +269,7 @@ variable "keyvault_access_policies_azuread_apps" {
 
 variable "keyvault_access_policies_aks_agic_ingress" {
   description = "Configuration object - Azure Key Vault policy for azure AKS AGIC Ingress identities"
-  default = {}
+  default     = {}
 }
 
 variable "custom_role_definitions" {
@@ -411,13 +411,16 @@ variable "sentinel_watchlists" {
 variable "iot" {
   description = "Configuration object - IoT"
   default = {
-    # digital_twins_instances                 = {}
-    # digital_twins_endpoint_eventhubs                 = {}
-    # digital_twins_endpoint_eventgrids = {}
+    # digital_twins_instances             = {}
+    # digital_twins_endpoint_eventhubs    = {}
+    # digital_twins_endpoint_eventgrids   = {}
     # digital_twins_endpoint_servicebuses = {}
-
   }
 }
 variable "resource_provider_registration" {
   default = {}
+}
+
+variable "iothubs" {
+  default = {}  
 }

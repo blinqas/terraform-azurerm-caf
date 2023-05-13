@@ -68,7 +68,7 @@ data "azurerm_management_group" "level" {
   for_each = {
     for key, value in try(var.role_mapping.built_in_role_mapping.management_group, {}) : key => value
   }
-  name = lower(each.key) == "root" ? data.azurerm_client_config.current.tenant_id : null
+  name         = lower(each.key) == "root" ? data.azurerm_client_config.current.tenant_id : null
   display_name = lower(each.key) == "root" ? null : each.key
 }
 
@@ -80,7 +80,7 @@ locals {
         for key, value in try(module.aks_clusters, {}) :
         key => {
           rbac_id = can(value.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id) ? value.ingress_application_gateway[0].ingress_application_gateway_identity[0].object_id : null
-        } 
+        }
       }
     }
   )
@@ -110,6 +110,7 @@ locals {
     app_service_environments                   = local.combined_objects_app_service_environments
     app_service_environments_v3                = local.combined_objects_app_service_environments_v3
     app_service_plans                          = local.combined_objects_app_service_plans
+    service_plans                              = local.combined_objects_service_plans
     app_services                               = local.combined_objects_app_services
     application_gateway_platforms              = local.combined_objects_application_gateway_platforms
     application_gateways                       = local.combined_objects_application_gateways
@@ -125,9 +126,11 @@ locals {
     batch_accounts                             = local.combined_objects_batch_accounts
     data_factory                               = local.combined_objects_data_factory
     databricks_workspaces                      = local.combined_objects_databricks_workspaces
+    disk_encryption_sets                       = local.combined_objects_disk_encryption_sets
     dns_zones                                  = local.combined_objects_dns_zones
     function_apps                              = local.combined_objects_function_apps
     event_hub_namespaces                       = local.combined_objects_event_hub_namespaces
+    iothubs                                    = local.combined_objects_iothubs
     keyvaults                                  = local.combined_objects_keyvaults
     kusto_clusters                             = local.combined_objects_kusto_clusters
     logged_in                                  = local.logged_in
@@ -150,11 +153,13 @@ locals {
     purview_accounts                           = local.combined_objects_purview_accounts
     recovery_vaults                            = local.combined_objects_recovery_vaults
     resource_groups                            = local.combined_objects_resource_groups
+    servicebus_namespaces                      = local.combined_objects_servicebus_namespaces
     storage_accounts                           = local.combined_objects_storage_accounts
     subscriptions                              = local.combined_objects_subscriptions
     synapse_workspaces                         = local.combined_objects_synapse_workspaces
     virtual_subnets                            = local.combined_objects_virtual_subnets
-    log_analytics                              = local.current_objects_log_analytics
+    # virtual_machines                           = local.combined_objects_virtual_machines # blinQ: need to find another solution, cause cycling
+    log_analytics = local.current_objects_log_analytics
   }
 
   current_objects_log_analytics = tomap(
@@ -197,28 +202,28 @@ locals {
   roles_to_process = {
     for mapping in
     flatten([
-      for key_mode, all_role_mapping in var.role_mapping : [                                                                           # built_in_role_mapping = {
-        for key, role_mappings in all_role_mapping : [                                                                                 #   keyvaults = {
-          for scope_key_resource, role_mapping in role_mappings : [                                                                    #     "kv_sql_prod" = {
-            for role_definition_name, resources in role_mapping : [                                                                    #       "Key Vault Secrets Officer" = {
-              for object_id_key, object_resources in resources : [                                                                     #          azuread_groups = {
-                for object_id_lz_keys, object_resource in object_resources : [                                                          #             "identity_level2" = {
-                  for object_id_key_resource in(can(object_resources.keys)) ? object_resources.keys : object_resource.keys : [         #                keys = ["admin_sql"]                  # Support for legacy variable format
-                    {                                                                                                                  # "keyvaults_Key_Vault_Secrets_Officer_admin_sql" = {
-                      mode                    = key_mode                                                                               #   "mode" = "built_in_role_mapping"
+      for key_mode, all_role_mapping in var.role_mapping : [                                                                   # built_in_role_mapping = {
+        for key, role_mappings in all_role_mapping : [                                                                         #   keyvaults = {
+          for scope_key_resource, role_mapping in role_mappings : [                                                            #     "kv_sql_prod" = {
+            for role_definition_name, resources in role_mapping : [                                                            #       "Key Vault Secrets Officer" = {
+              for object_id_key, object_resources in resources : [                                                             #          azuread_groups = {
+                for object_id_lz_keys, object_resource in object_resources : [                                                 #             "identity_level2" = {
+                  for object_id_key_resource in(can(object_resources.keys)) ? object_resources.keys : object_resource.keys : [ #                keys = ["admin_sql"]                  # Support for legacy variable format
+                    {                                                                                                          # "keyvaults_Key_Vault_Secrets_Officer_admin_sql" = {
+                      mode                    = key_mode                                                                       #   "mode" = "built_in_role_mapping"
                       scope_resource_key      = key
                       scope_lz_key            = try(role_mapping.lz_key, null)
                       scope_key_resource      = scope_key_resource
                       role_definition_name    = role_definition_name
                       object_id_resource_type = object_id_key
-                      object_id_key_resource  = object_id_key_resource                                                                 #   "object_id_key_resource" = "admin_sql"
-                      object_id_lz_key        = can(object_resources.keys) ? try(object_resources.lz_key, null) : object_id_lz_keys     # Support for legacy variable format
+                      object_id_key_resource  = object_id_key_resource                                                              #   "object_id_key_resource" = "admin_sql"
+                      object_id_lz_key        = can(object_resources.keys) ? try(object_resources.lz_key, null) : object_id_lz_keys # Support for legacy variable format
                     }
                   ]
-                ] if object_id_lz_keys != "lz_key"                                                                                     # Support for legacy variable format
+                ] if object_id_lz_keys != "lz_key" # Support for legacy variable format
               ] if object_id_key != "lz_key"
             ] if role_definition_name != "lz_key"
-          ] 
+          ]
         ]
       ]
     ]) : format("%s_%s_%s_%s", mapping.object_id_resource_type, mapping.scope_key_resource, replace(mapping.role_definition_name, " ", "_"), mapping.object_id_key_resource) => mapping

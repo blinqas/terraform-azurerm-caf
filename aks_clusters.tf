@@ -31,3 +31,13 @@ module "aks_clusters" {
 
 }
 
+/* blinQ temp: need to fix locals for admin_broup_object_ids based on keys
+
+local = {
+
+  admin_group_key_ids = can(local.compute.aks_clusters.admin_groups.azuread_groups.keys) ? 
+  admin_groups_ids = {
+
+  }
+}
+*/

@@ -15,9 +15,16 @@ module "container_registry" {
   diagnostic_profiles = try(each.value.diagnostic_profiles, {})
   private_endpoints   = try(each.value.private_endpoints, {})
   base_tags           = try(local.global_settings.inherit_tags, false) ? try(local.combined_objects_resource_groups[try(each.value.resource_group.lz_key, local.client_config.landingzone_key)][try(each.value.resource_group.key, each.value.resource_group_key)].tags, {}) : {}
-  private_dns         = local.combined_objects_private_dns
-  resource_groups     = local.combined_objects_resource_groups
-  settings            = each.value
+
+  settings = each.value
+
+  remote_objects = {
+    private_dns        = local.combined_objects_private_dns
+    resource_groups    = local.combined_objects_resource_groups
+    managed_identities = local.combined_objects_managed_identities
+    keyvaults          = local.combined_objects_keyvaults
+    keyvault_keys      = local.combined_objects_keyvault_keys
+  }
 
   public_network_access_enabled = try(each.value.public_network_access_enabled, "true")
 

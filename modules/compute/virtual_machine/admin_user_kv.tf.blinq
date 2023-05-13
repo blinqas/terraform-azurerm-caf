@@ -11,7 +11,7 @@ locals {
   # Confirm keyvault usage
   use_kv_for_admin_user         = !(try(local.os_settings.disable_password_authentication, false)) && can(local.os_settings.admin_user_keyvault.key)
   create_secrets_for_admin_user = (local.use_kv_for_admin_user) && (can(local.os_settings.admin_username) || can(local.creation_secrets.admin_username))
-  kv_to_use                     = var.keyvaults[try(local.os_settings.admin_user_keyvault.lz_key, var.client_config.landingzone_key)][try(local.os_settings.admin_user_keyvault.key, local.vm_settings.keyvault)]
+  kv_to_use                     = try(var.keyvaults[try(local.os_settings.admin_user_keyvault.lz_key, var.client_config.landingzone_key)][try(local.os_settings.admin_user_keyvault.key, local.vm_settings.keyvault)], null)
   use_secret_prefix             = try(local.admin_user_kv.prefix_secret_names_with_vm_name, false)
 
   # Existing keyvault secret overrule others
@@ -57,12 +57,13 @@ locals {
 
 # Use existing keyvault and secret for admin_username and password, receive all secrets to confirm they exist before referencing them
 data "azurerm_key_vault_secrets" "admin_user" {
+  count = can(local.kv_to_use.id) ? 1 : 0
   key_vault_id = local.kv_to_use.id
 }
 
 locals {
-  secret_exists_admin_username = contains(data.azurerm_key_vault_secrets.admin_user.names, local.secret_names.user)
-  secret_exists_admin_password = contains(data.azurerm_key_vault_secrets.admin_user.names, local.secret_names.password)
+  secret_exists_admin_username = try(contains(data.azurerm_key_vault_secrets.admin_user.0.names, local.secret_names.user), false)
+  secret_exists_admin_password = try(contains(data.azurerm_key_vault_secrets.admin_user.0.names, local.secret_names.password), false)
 }
 
 # Always create data entity for the real admin_username secret

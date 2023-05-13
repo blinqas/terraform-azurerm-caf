@@ -1,7 +1,7 @@
 resource "azurerm_servicebus_namespace_network_rule_set" "rule_set" {
   namespace_id = var.remote_objects.servicebus_namespace_id
   # resource_group_name = var.remote_objects.resource_group_name
-  default_action                = try(var.settings.default_action, null)
+  default_action                = try(var.settings.default_action, "Deny")
   public_network_access_enabled = try(var.settings.public_network_access_enabled, null)
   trusted_services_allowed      = try(var.settings.trusted_services_allowed, null)
   ip_rules                      = try(var.settings.ip_rules, null)

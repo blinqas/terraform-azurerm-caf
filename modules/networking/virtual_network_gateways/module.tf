@@ -24,9 +24,9 @@ resource "azurerm_virtual_network_gateway" "vngw" {
     for_each = try(var.settings.ip_configuration, {})
     content {
       name                          = ip_configuration.value.ipconfig_name
-      public_ip_address_id          = can(ip_configuration.value.public_ip_address_id) || can(ip_configuration.value.public_ip_address_key) == false ? try(ip_configuration.value.public_ip_address_id, null) : var.public_ip_addresses[try(ip_configuration.value.lz_key, var.client_config.landingzone_key)][ip_configuration.value.public_ip_address_key].id
+      public_ip_address_id          = can(ip_configuration.value.public_ip_address_id) || (try(ip_configuration.value.public_ip_address_key, ip_configuration.value.public_ip_address.key, null) != null) == false ? try(ip_configuration.value.public_ip_address_id, null) : var.public_ip_addresses[try(ip_configuration.value.public_ip_address.lz_key, ip_configuration.value.lz_key, var.client_config.landingzone_key)][try(ip_configuration.value.public_ip_address.key, ip_configuration.value.public_ip_address_key)].id
       private_ip_address_allocation = ip_configuration.value.private_ip_address_allocation
-      subnet_id                     = can(ip_configuration.value.subnet_id) ? ip_configuration.value.subnet_id : var.vnets[try(ip_configuration.value.lz_key, var.client_config.landingzone_key)][ip_configuration.value.vnet_key].subnets["GatewaySubnet"].id
+      subnet_id                     = can(ip_configuration.value.subnet_id) ? ip_configuration.value.subnet_id : var.vnets[try(ip_configuration.value.vnet.lz_key, ip_configuration.value.lz_key, var.client_config.landingzone_key)][try(ip_configuration.value.vnet.key, ip_configuration.value.vnet_key)].subnets["GatewaySubnet"].id
     }
   }
 

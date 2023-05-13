@@ -19,16 +19,16 @@ resource "azurerm_app_service_environment_v3" "asev3" {
   tags                                   = try(local.tags, null)
 
   dynamic "cluster_setting" {
-    for_each = can(var.settings.cluster_settings) ? var.settings.cluster_settings : []
+    for_each = can(var.settings.cluster_settings) ? var.settings.cluster_settings : {}
 
     content {
-      name  = cluster_setting.name
-      value = cluster_setting.value
+      name  = cluster_setting.value.name
+      value = cluster_setting.value.value
     }
   }
 
   dynamic "cluster_setting" {
-    for_each = can(var.settings.cluster_settings) ? [1] : []
+    for_each = can(var.settings.cluster_settings) ? [] : [1]
 
     content {
       name  = "FrontEndSSLCipherSuiteOrder"

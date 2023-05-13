@@ -301,6 +301,7 @@ locals {
     vhub_peerings                                           = try(var.networking.vhub_peerings, {})
     virtual_hub_connections                                 = try(var.networking.virtual_hub_connections, {})
     virtual_hub_er_gateway_connections                      = try(var.networking.virtual_hub_er_gateway_connections, {})
+    virtual_hub_route_maps                                  = try(var.networking.virtual_hub_route_maps, {})
     virtual_hub_route_table_routes                          = try(var.networking.virtual_hub_route_table_routes, {})
     virtual_hub_route_tables                                = try(var.networking.virtual_hub_route_tables, {})
     virtual_hubs                                            = try(var.networking.virtual_hubs, {})
@@ -374,6 +375,7 @@ locals {
     app_service_environments_v3  = try(var.webapp.app_service_environments_v3, {})
     app_service_plans            = try(var.webapp.app_service_plans, {})
     app_services                 = try(var.webapp.app_services, {})
+    service_plans                 = try(var.webapp.service_plans, {})
     azurerm_application_insights = try(var.webapp.azurerm_application_insights, {})
     function_apps                = try(var.webapp.function_apps, {})
     static_sites                 = try(var.webapp.static_sites, {})
@@ -412,6 +414,8 @@ locals {
     digital_twins_instances             = try(var.iot.digital_twins_instances, {})
     digital_twins_endpoint_eventhubs    = try(var.iot.digital_twins_endpoint_eventhubs, {})
     digital_twins_endpoint_eventgrids   = try(var.iot.digital_twins_endpoint_eventgrids, {})
-    digital_twins_endpoint_servicebuses = try(var.iot.digital_twins_endpoint_servicebuses, {})
+    digital_twins_endpoint_servicebuses = try(var.iot.digital_twins_endpoint_servicebuses, {})    
   }
+
+  iothubs = var.iothubs
 }

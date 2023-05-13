@@ -54,10 +54,14 @@ resource "azurecaf_name" "os_disk_linux" {
 }
 
 resource "azurerm_linux_virtual_machine" "vm" {
+  depends_on = [data.azurerm_key_vault_secret.admin_username,
+                data.azurerm_key_vault_secret.admin_password,
+                azurerm_key_vault_secret.admin_username_resource,
+                azurerm_key_vault_secret.admin_password_resource]
   for_each = local.os_type == "linux" ? var.settings.virtual_machine_settings : {}
 
-  admin_password                  = each.value.disable_password_authentication == false ? each.value.admin_password : null
-  admin_username                  = each.value.admin_username
+  admin_password                  = each.value.disable_password_authentication == false ? local.admin_password_linux : null
+  admin_username                  = local.admin_username_linux
   allow_extension_operations      = try(each.value.allow_extension_operations, null)
   availability_set_id             = can(each.value.availability_set_key) || can(each.value.availability_set.key) ? var.availability_sets[try(var.client_config.landingzone_key, each.value.availability_set.lz_key)][try(each.value.availability_set_key, each.value.availability_set.key)].id : try(each.value.availability_set.id, each.value.availability_set_id, null)
   computer_name                   = azurecaf_name.linux_computer_name[each.key].result

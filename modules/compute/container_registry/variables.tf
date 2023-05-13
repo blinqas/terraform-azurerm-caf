@@ -1,4 +1,5 @@
 variable "settings" {}
+variable "remote_objects" {}
 variable "global_settings" {
   description = "Global settings object (see module README.md)"
 }
