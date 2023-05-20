@@ -110,7 +110,7 @@ locals {
     traffic_manager_azure_endpoint                 = try(local.combined_objects_traffic_manager_azure_endpoint, null)
     traffic_manager_external_endpoint              = try(local.combined_objects_traffic_manager_external_endpoint, null)
     virtual_hub_connections                        = try(local.combined_objects_virtual_hub_connections, null)
-    virtual_hub_route_maps                          = try(local.combined_objects_virtual_hub_route_maps, null)
+    virtual_hub_route_maps                         = try(local.combined_objects_virtual_hub_route_maps, null)
     virtual_hub_route_tables                       = try(local.combined_objects_virtual_hub_route_tables, null)
     virtual_hubs                                   = try(local.combined_objects_virtual_hubs, null)
     virtual_machine_scale_sets                     = try(local.combined_objects_virtual_machine_scale_sets, null)

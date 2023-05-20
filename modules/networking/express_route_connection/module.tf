@@ -47,8 +47,7 @@ locals {
     id = try(coalesce(
       try(var.virtual_hub_route_maps[var.settings.routing.inbound_route_map.lz_key][var.settings.routing.inbound_route_map.key].id, ""),
       try(var.virtual_hub_route_maps[var.client_config.landingzone_key][var.settings.routing.inbound_route_map.key].id, ""),
-      try(var.settings.routing.inbound_route_map.id, ""),
-      contains(tolist(["defaultRouteTable", "noneRouteTable"]), try(var.settings.routing.inbound_route_map.key, "")) ? format("%s/hubRouteTables/%s", var.virtual_hub_id, var.settings.routing.inbound_route_map.key) : ""
+      try(var.settings.routing.inbound_route_map.id, "")
     ), null)
   }
 
@@ -56,8 +55,7 @@ locals {
     id = try(coalesce(
       try(var.virtual_hub_route_maps[var.settings.routing.outbound_route_map.lz_key][var.settings.routing.outbound_route_map.key].id, ""),
       try(var.virtual_hub_route_maps[var.client_config.landingzone_key][var.settings.routing.outbound_route_map.key].id, ""),
-      try(var.settings.routing.outbound_route_map.id, ""),
-      contains(tolist(["defaultRouteTable", "noneRouteTable"]), try(var.settings.routing.outbound_route_map.key, "")) ? format("%s/hubRouteTables/%s", var.virtual_hub_id, var.settings.routing.outbound_route_map.key) : ""
+      try(var.settings.routing.outbound_route_map.id, "")
     ), null)
   }
 

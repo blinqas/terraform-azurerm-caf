@@ -56,7 +56,7 @@ module "group_name" {
 
 module "group_keys" {
   source   = "./member"
-  for_each = try(var.settings.members.group_keys, {})
+  for_each = toset(try(var.settings.members.group_keys, []))
 
   group_object_id  = var.group_id
   member_object_id = var.azuread_groups[try(each.value.lz_key, var.client_config.landingzone_key)][each.key].id
