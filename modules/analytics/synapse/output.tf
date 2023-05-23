@@ -31,6 +31,6 @@ output "sql_pool" {
 }
 
 output "rbac_id" {
-  value = azurerm_synapse_workspace.ws.identity[0].principal_id
+  value = try(azurerm_synapse_workspace.ws.identity[0].principal_id, null)
 
 }

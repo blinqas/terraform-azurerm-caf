@@ -38,6 +38,9 @@ variable "vnets" {
 variable "private_endpoints" {
   default = {}
 }
+variable "managed_identities" {
+  default = {}
+}
 variable "private_dns" {
   default = {}
 }

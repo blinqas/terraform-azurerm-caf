@@ -23,6 +23,11 @@ resource "azurerm_synapse_workspace" "ws" {
   managed_resource_group_name          = try(var.settings.managed_resource_group_name, null)
   tags                                 = local.tags
 
+  identity {
+    type = try(var.settings.identity.type, "SystemAssigned")
+    identity_ids = try(var.settings.managed_identities[try(var.settings.identity.lz_key, var.client_config.landingzone_key)][var.settings.identity.key].id, null)
+  }
+
   dynamic "aad_admin" {
     for_each = try(var.settings.aad_admin, {})
 
