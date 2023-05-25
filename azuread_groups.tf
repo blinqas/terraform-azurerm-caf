@@ -37,7 +37,7 @@ module "azuread_groups_membership" {
 
   client_config              = local.client_config
   group_key                  = each.key
-  group_lz_key               = each.value.group_lz_key
+  # blinq: tbd -- group_lz_key               = each.value.group_lz_key
   settings                   = each.value
   group_id                   = try(module.azuread_groups[each.key].id, local.combined_objects_azuread_groups[each.value.group_lz_key][each.key].id)
   azuread_groups             = local.combined_objects_azuread_groups
