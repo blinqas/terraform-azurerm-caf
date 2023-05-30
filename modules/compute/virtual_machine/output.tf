@@ -80,6 +80,14 @@ output "os_disk_id" {
   value = data.azurerm_managed_disk.os_disk.id
 }
 
+output "custom_data_filebase64" {
+  value = try(filebase64(format("%s/%s", path.cwd, var.settings.virtual_machine_settings.custom_data)), null)
+}
+
+output "custom_data" {
+  value = try(azurerm_linux_virtual_machine.vm["linux"].custom_data, azurerm_linux_virtual_machine.vm["windows"].custom_data, null)
+}
+
 #output "debug" {
 #  value = local.debug
 #}
