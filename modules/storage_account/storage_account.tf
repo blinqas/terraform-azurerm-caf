@@ -45,15 +45,16 @@ resource "azurerm_storage_account" "stg" {
     }
   }
 
-  /* blinQ: legacy - dedicated resource in terraform azurerm 3.47
-  dynamic "customer_managed_key" {
+  # blinQ: legacy by caf implementation - dedicated resource in terraform azurerm 3.47
+  /*dynamic "customer_managed_key" {
     for_each = can(var.storage_account.customer_managed_key) ? [1] : []
 
     content {
       key_vault_key_id          = var.storage_account.customer_managed_key.key_vault_key_id                     # Update root module
       user_assigned_identity_id = try(var.storage_account.customer_managed_key.user_assigned_identity_id, null) # Update root module
     }
-  }*/
+  }
+  */
 
   dynamic "identity" {
     for_each = can(var.storage_account.identity) ? [var.storage_account.identity] : []
@@ -102,7 +103,7 @@ resource "azurerm_storage_account" "stg" {
       versioning_enabled            = try(var.storage_account.blob_properties.versioning_enabled, false)
       change_feed_enabled           = try(var.storage_account.blob_properties.change_feed_enabled, false)
       change_feed_retention_in_days = try(var.storage_account.blob_properties.change_feed_retention_in_days, null)
-      default_service_version       = try(var.storage_account.blob_properties.default_service_version, "2020-06-12")
+      default_service_version       = try(var.storage_account.blob_properties.default_service_version, null)
       last_access_time_enabled      = try(var.storage_account.blob_properties.last_access_time_enabled, false)
 
       dynamic "container_delete_retention_policy" {
@@ -231,7 +232,9 @@ resource "azurerm_storage_account" "stg" {
 
   lifecycle {
     ignore_changes = [
-      location, resource_group_name
+      location,
+      resource_group_name,
+      customer_managed_key
     ]
   }
 }

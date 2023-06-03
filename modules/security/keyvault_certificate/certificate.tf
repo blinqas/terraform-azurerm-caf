@@ -1,10 +1,17 @@
+locals {
+  san = var.subject_alternative_names != null ? {
+    dns_names = length(var.subject_alternative_names.dns_names) > 0 ? var.subject_alternative_names.dns_names : null
+    emails    = length(var.subject_alternative_names.emails) > 0 ? var.subject_alternative_names.emails : null
+    upns      = length(var.subject_alternative_names.upns) > 0 ? var.subject_alternative_names.upns : null
+  } : null
+}
 
 resource "azurerm_key_vault_certificate" "cert" {
 
   name         = var.settings.name
   key_vault_id = var.keyvault.id
   # Disabled inherited tags as it may have exceed limit of 15 tags on cert that gives badparameter error
-  tags = try(var.settings.cert_tags, null)
+  tags = try(var.settings.cert_tags, {})
 
   certificate_policy {
     issuer_parameters {
@@ -12,6 +19,7 @@ resource "azurerm_key_vault_certificate" "cert" {
     }
 
     key_properties {
+      curve      = var.settings.curve
       exportable = var.settings.exportable
       key_size   = var.settings.key_size
       key_type   = var.settings.key_type
@@ -24,8 +32,8 @@ resource "azurerm_key_vault_certificate" "cert" {
       }
 
       trigger {
-        days_before_expiry  = try(var.settings.lifetime_percentage, null) == null ? var.settings.days_before_expiry : null
-        lifetime_percentage = try(var.settings.days_before_expiry, null) == null ? var.settings.lifetime_percentage : null
+        days_before_expiry  = try(var.settings.lifetime_percentage, null) == null ? var.settings.days_before_expiry : "0"
+        lifetime_percentage = try(var.settings.days_before_expiry, null) == null ? var.settings.lifetime_percentage : "0"
       }
     }
 
@@ -34,16 +42,21 @@ resource "azurerm_key_vault_certificate" "cert" {
     }
 
     x509_certificate_properties {
-      key_usage = var.settings.key_usage
+      extended_key_usage = var.settings.extended_key_usage
+      key_usage          = var.settings.key_usage
 
       subject            = var.settings.subject
       validity_in_months = var.settings.validity_in_months
 
-      subject_alternative_names {
-        dns_names = try(var.settings.subject_alternative_names.dns_names, null)
-        emails    = try(var.settings.subject_alternative_names.emails, null)
-        upns      = try(var.settings.subject_alternative_names.upns, null)
+      dynamic "subject_alternative_names" {
+        for_each = local.san != null ? [local.san] : []
+        content {
+          dns_names = var.subject_alternative_names.dns_names
+          emails    = var.subject_alternative_names.emails
+          upns      = var.subject_alternative_names.upns
+        }
       }
     }
+
   }
 }

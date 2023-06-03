@@ -21,6 +21,7 @@ module "storage_accounts" {
   resource_groups           = try(each.value.private_endpoints, {}) == {} ? null : local.combined_objects_resource_groups
   storage_account           = each.value
   vnets                     = local.combined_objects_networking
+
 }
 
 output "storage_accounts" {

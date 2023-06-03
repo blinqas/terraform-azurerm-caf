@@ -6,15 +6,15 @@ resource "azurerm_web_application_firewall_policy" "wafpolicy" {
   tags                = local.tags
 
   dynamic "custom_rules" {
-    for_each = try(var.settings.custom_rules, {})
+    for_each = can(var.settings.custom_rules) ? [1] : []
     content {
-      name      = custom_rules.value.name
-      priority  = custom_rules.value.priority
-      rule_type = custom_rules.value.rule_type
-      action    = custom_rules.value.action
+      name      = try(var.settings.custom_rules.name, null)
+      priority  = var.settings.custom_rules.priority
+      rule_type = var.settings.custom_rules.rule_type
+      action    = var.settings.custom_rules.action
 
       dynamic "match_conditions" {
-        for_each = custom_rules.value.match_conditions
+        for_each = var.settings.custom_rules.match_conditions
         content {
           match_values       = match_conditions.value.match_values
           operator           = match_conditions.value.operator
@@ -44,39 +44,49 @@ resource "azurerm_web_application_firewall_policy" "wafpolicy" {
     }
   }
 
-  dynamic "managed_rules" {
-    for_each = try(var.settings.managed_rules, {}) != {} ? [1] : []
-    content {
-      dynamic "exclusion" {
-        for_each = try(var.settings.managed_rules.exclusions, {})
-        content {
-          match_variable          = exclusion.value.match_variable
-          selector                = try(exclusion.value.selector, null)
-          selector_match_operator = exclusion.value.selector_match_operator
+  managed_rules {
+    dynamic "exclusion" {
+      for_each = try(var.settings.managed_rules.exclusions, {})
+      content {
+        match_variable          = exclusion.value.match_variable
+        selector                = try(exclusion.value.selector, null)
+        selector_match_operator = exclusion.value.selector_match_operator
+        dynamic "excluded_rule_set" {
+          for_each = exclusion.value.excluded_rule_set
+
+          content {
+            type    = try(excluded_rule_set.value.type, "OWASP")
+            version = try(excluded_rule_set.value.version, "3.2")
+
+            dynamic "rule_group" {
+              for_each = excluded_rule_set.value.rule_group
+
+              content {
+                rule_group_name = try(rule_group.value.rule_group_name, rule_group.value.name)
+                excluded_rules  = try(rule_group.value.excluded_rules, null)
+              }
+            }
+          }
         }
       }
-      dynamic "managed_rule_set" {
-        for_each = var.settings.managed_rules.managed_rule_set
+    }
+    managed_rule_set {
+      type    = try(var.settings.managed_rules.type, null)
+      version = var.settings.managed_rules.value.version
+
+      dynamic "rule_group_override" {
+        for_each = try(var.settings.managed_rules.rule_group_override, {})
         content {
-          type    = try(managed_rule_set.value.type, null)
-          version = managed_rule_set.value.version
+          rule_group_name = try(var.settings.managed_rules.rule_group_override.rule_group_name, rule_group_override.value.name)
 
-          dynamic "rule_group_override" {
-            for_each = try(managed_rule_set.value.rule_group_override, {})
+          dynamic "rule" {
+            for_each = { for rules, value in rule_group_override : rules => value
+            if rules == "rule" }
+
             content {
-              rule_group_name = rule_group_override.value.rule_group_name
-              # disabled_rules  = try(rule_group_override.value.disabled_rules, null)
-
-              dynamic "rule" {
-                for_each = { for rules, value in rule_group_override : rules => value
-                if rules == "rule" }
-
-                content {
-                  id = rule.value.id
-                  enabled = rule.value.enabled
-                  action = rule.value.action
-                }
-              }
+              id      = rule.value.id
+              enabled = rule.value.enabled
+              action  = rule.value.action
             }
           }
         }
