@@ -15,7 +15,7 @@ resource "azurecaf_name" "windows" {
 resource "azurecaf_name" "windows_computer_name" {
   for_each = local.os_type == "windows" ? var.settings.virtual_machine_settings : {}
 
-  name          = each.value.name
+  name          = try(each.value.computer_name, each.value.name)
   resource_type = "azurerm_windows_virtual_machine"
   prefixes      = try(each.value.azurecaf_name.prefixes, var.global_settings.prefixes)
   random_length = try(each.value.azurecaf_name.random_length, var.global_settings.random_length)
@@ -51,14 +51,14 @@ resource "azurerm_windows_virtual_machine" "vm" {
   admin_username               = try(each.value.admin_username_key, null) == null ? each.value.admin_username : local.admin_username
   allow_extension_operations   = try(each.value.allow_extension_operations, null)
   availability_set_id          = can(each.value.availability_set_key) || can(each.value.availability_set.key) ? var.availability_sets[try(var.client_config.landingzone_key, each.value.availability_set.lz_key)][try(each.value.availability_set_key, each.value.availability_set.key)].id : try(each.value.availability_set.id, each.value.availability_set_id, null)
-  computer_name                = try(each.value.computer_name, azurecaf_name.windows_computer_name[each.key].result)      # blinQ: Windows computer name can only be 15 characters, resource name can be 64. We need to be able to set the computer_name buypassing the azurecaf generated name.
+  computer_name                = azurecaf_name.windows_computer_name[each.key].result
   enable_automatic_updates     = try(each.value.enable_automatic_updates, null)
   encryption_at_host_enabled   = try(each.value.encryption_at_host_enabled, null)
   eviction_policy              = try(each.value.eviction_policy, null)
   license_type                 = try(each.value.license_type, null)
   location                     = var.location
   max_bid_price                = try(each.value.max_bid_price, null)
-  name                         = azurecaf_name.windows[each.key].result
+  name                         = try(each.value.allign_azure_vm_name_with_computer_name, false) == true ? azurecaf_name.windows_computer_name[each.key].result : azurecaf_name.windows[each.key].result
   network_interface_ids        = local.nic_ids
   priority                     = try(each.value.priority, null)
   provision_vm_agent           = try(each.value.provision_vm_agent, true)
