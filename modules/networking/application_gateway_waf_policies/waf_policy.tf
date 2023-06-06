@@ -6,15 +6,15 @@ resource "azurerm_web_application_firewall_policy" "wafpolicy" {
   tags                = local.tags
 
   dynamic "custom_rules" {
-    for_each = can(var.settings.custom_rules) ? [1] : []
+    for_each = try(var.settings.custom_rules, {})
     content {
-      name      = try(var.settings.custom_rules.name, null)
-      priority  = var.settings.custom_rules.priority
-      rule_type = var.settings.custom_rules.rule_type
-      action    = var.settings.custom_rules.action
+      name      = custom_rules.value.name
+      priority  = custom_rules.value.priority
+      rule_type = custom_rules.value.rule_type
+      action    = custom_rules.value.action
 
       dynamic "match_conditions" {
-        for_each = var.settings.custom_rules.match_conditions
+        for_each = custom_rules.value.match_conditions
         content {
           match_values       = match_conditions.value.match_values
           operator           = match_conditions.value.operator
@@ -71,13 +71,13 @@ resource "azurerm_web_application_firewall_policy" "wafpolicy" {
       }
     }
     managed_rule_set {
-      type    = try(var.settings.managed_rules.type, null)
-      version = var.settings.managed_rules.value.version
+      type    = try(var.settings.managed_rules.managed_rule_set.type, null)
+      version = try(var.settings.managed_rules.managed_rule_set.version, "3.2")
 
       dynamic "rule_group_override" {
-        for_each = try(var.settings.managed_rules.rule_group_override, {})
+        for_each = try(var.settings.managed_rules.managed_rule_set.rule_group_override, {})
         content {
-          rule_group_name = try(var.settings.managed_rules.rule_group_override.rule_group_name, rule_group_override.value.name)
+          rule_group_name = try(rule_group_override.value.rule_group_name, rule_group_override.value.name)
 
           dynamic "rule" {
             for_each = { for rules, value in rule_group_override : rules => value
