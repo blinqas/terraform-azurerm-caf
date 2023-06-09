@@ -1,6 +1,6 @@
-resource "azurecaf_name" "app_service" {
+resource "azurecaf_name" "app_service_plan" {
   name          = var.name
-  resource_type = "azurerm_app_service"
+  resource_type = "azurerm_app_service_plan"
   prefixes      = var.global_settings.prefixes
   random_length = var.global_settings.random_length
   clean_input   = true
@@ -9,7 +9,7 @@ resource "azurecaf_name" "app_service" {
 }
 
 resource "azurerm_service_plan" "service_plan" {
-  name                = azurecaf_name.app_service.result
+  name                = azurecaf_name.app_service_plan.result
   resource_group_name = var.resource_group_name
   location            = var.location
   os_type             = var.settings.os_type
