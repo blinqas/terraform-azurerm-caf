@@ -123,6 +123,7 @@ resource "azurerm_function_app" "function_app" {
       app_scale_limit                  = lookup(var.settings.site_config, "app_scale_limit", null)
       elastic_instance_minimum         = lookup(var.settings.site_config, "elastic_instance_minimum", null)
       health_check_path                = lookup(var.settings.site_config, "health_check_path", null)
+      # minTlsVersion                    = lookup(var.settings.site_config, "min_tls_version", null)
       min_tls_version                  = lookup(var.settings.site_config, "min_tls_version", null)
       pre_warmed_instance_count        = lookup(var.settings.site_config, "pre_warmed_instance_count", null)
       runtime_scale_monitoring_enabled = lookup(var.settings.site_config, "runtime_scale_monitoring_enabled", null)
@@ -192,11 +193,9 @@ resource "azurerm_function_app" "function_app" {
 }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "vnet_config" {
-  depends_on     = [azurerm_function_app.function_app]
-  count          = lookup(var.settings, "subnet_key", null) == null && lookup(var.settings, "subnet_id", null) == null ? 0 : 1
+  depends_on = [azurerm_function_app.function_app]
+  count      = can(var.settings.subnet.key) || can(var.settings.subnet_key) || can(var.settings.subnet_id) ? 1 : 0
+  # count          = lookup(var.settings, "subnet_key", null) == null && lookup(var.settings, "subnet_id", null) == null ? 0 : 1
   app_service_id = azurerm_function_app.function_app.id
-  subnet_id = coalesce(
-    try(var.remote_objects.subnets[var.settings.subnet_key].id, null),
-    try(var.settings.subnet_id, null)
-  )
+  subnet_id = can(var.settings.subnet_id) || can(var.settings.subnet.id) ? try(var.settings.subnet.id, var.settings.subnet_id) : try(var.vnets[try(var.settings.subnet.lz_key, var.settings.lz_key)][try(var.settings.subnet.vnet_key, var.settings.vnet_key)].subnets[try(var.settings.subnet.key, var.settings.subnet_key)].id, null)
 }
