@@ -1,9 +1,19 @@
+data "azurecaf_name" "linux_function_app" {
+  name          = var.name
+  resource_type = "azurerm_function_app" # Update to azurerm_linux_function_app when available
+  prefixes      = var.global_settings.prefixes
+  random_length = var.global_settings.random_length
+  clean_input   = true
+  passthrough   = var.global_settings.passthrough
+  use_slug      = var.global_settings.use_slug
+}
+
 resource "azurerm_linux_web_app" "linux_web_app" {
   # To avoid redeploy with existing customer
   lifecycle {
     ignore_changes = [name]
   }
-  name                = azurecaf_name.plan.result
+  name                = data.azurecaf_name.linux_function_app.result
   location            = var.location
   resource_group_name = var.resource_group_name
   service_plan_id     = var.service_plan_id
@@ -30,8 +40,10 @@ resource "azurerm_linux_web_app" "linux_web_app" {
         for_each = lookup(var.settings.auth_settings, "active_directory", {}) != {} ? [1] : []
 
         content {
-          client_id         = var.settings.auth_settings.active_directory.client_id
-          client_secret     = lookup(var.settings.auth_settings.active_directory, "client_secret", null)
+          client_id         = lookup(var.settings.auth_settings.active_directory, "client_id", false) ? var.settings.auth_settings.active_directory.client_id : can(var.settings.auth_settings.active_directory.client_id_kv_secret_key) ? try(var.remote_objects.key_vault[try(var.settings.auth_settings.active_directory.lz_key, local.client_config.landingzone_key)].var.settings.auth_settings.active_directory.client_id_kv_secret_key, null) : null
+          
+          client_secret     = lookup(var.settings.auth_settings.active_directory, "client_secret", false) ? var.settings.auth_settings.active_directory.client_secret : can(var.settings.auth_settings.active_directory.client_secret_kv_secret_key) ? try(var.remote_objects.key_vault[try(var.settings.auth_settings.active_directory.lz_key, local.client_config.landingzone_key)].var.settings.auth_settings.active_directory.client_secret_kv_secret_key, null) : null
+          
           allowed_audiences = lookup(var.settings.auth_settings.active_directory, "allowed_audiences", null)
         }
       }
