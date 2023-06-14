@@ -25,7 +25,7 @@ resource "null_resource" "set_url_path_rule" {
       HTTP_SETTINGS            = try(var.settings.http_settings[each.value.http_settings_key].name, null)
       REDIRECT_CONFIG          = try(each.value.redirect_config, null)
       REWRITE_RULE_SET         = try(var.settings.rewrite_rule_sets[each.value.rewrite_rule_set_key].name, null)
-      WAF_POLICY               = try(each.value.waf_policy, null)
+      WAF_POLICY               = try(var.application_gateway_waf_policies[try(each.value.waf_policy.lz_key, each.value.lz_key, var.client_config.landingzone_key)][try(each.value.waf_policy.key, each.value.waf_policy_key)].id, null)
     }
   }
 }
