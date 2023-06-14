@@ -153,13 +153,14 @@ case "${RESOURCE}" in
     PATHMAP)
         addresspool=$([ -z "${ADDRESS_POOL}" ] && echo "" || echo "--address-pool ${ADDRESS_POOL} ")
         httpsettings=$([ -z "${HTTP_SETTINGS}" ] && echo "" || echo "--http-settings ${HTTP_SETTINGS} ")
+        defaulthttpsettings=$([ -z "${DEFAULT_HTTP_SETTINGS}" ] && echo "" || echo "--default-http-settings ${DEFAULT_HTTP_SETTINGS} ")
         redirectconfig=$([ -z "${REDIRECT_CONFIG}" ] && echo "" || echo "--redirect-config ${REDIRECT_CONFIG} ")
         rewriteruleset=$([ -z "${REWRITE_RULE_SET}" ] && echo "" || echo "--rewrite-rule-set ${REWRITE_RULE_SET} ")
         rulename=$([ -z "${RULE_NAME}" ] && echo "" || echo "--rule-name ${RULE_NAME} ")
         wafpolicy=$([ -z "${WAF_POLICY}" ] && echo "" || echo "--waf-policy ${WAF_POLICY} ")
 
         execute_with_backoff az network application-gateway url-path-map create -g ${RG_NAME} --gateway-name ${APPLICATION_GATEWAY_NAME} \
-            -n ${NAME} --paths ${PATHS} ${addresspool}${httpsettings}${redirectconfig}${rewriteruleset}${rulename}${wafpolicy}
+            -n ${NAME} --paths ${PATHS} ${addresspool}${httpsettings}${defaulthttpsettings}${redirectconfig}${rewriteruleset}${rulename}${wafpolicy}
         ;;
     PATHRULE)
         addresspool=$([ -z "${ADDRESS_POOL}" ] && echo "" || echo "--address-pool ${ADDRESS_POOL} ")
