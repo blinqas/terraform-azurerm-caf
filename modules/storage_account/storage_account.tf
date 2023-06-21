@@ -1,6 +1,6 @@
 locals {
   # Need to update the storage tags if the environment tag is updated with the rover command line
-  tags = lookup(var.storage_account, "tags", null) == null ? null : lookup(var.storage_account.tags, "environment", null) == null ? var.storage_account.tags : merge(lookup(var.storage_account, "tags", {}), { "environment" : var.global_settings.environment })
+  tags = lookup(var.storage_account, "tags", null) == null ? {} : lookup(var.storage_account.tags, "environment", null) == null ? var.storage_account.tags : merge(lookup(var.storage_account, "tags", {}), { "environment" : var.global_settings.environment })
 }
 
 # naming convention. Updated to support resource spesific overrides of azurecaf properties.
@@ -35,6 +35,7 @@ resource "azurerm_storage_account" "stg" {
   default_to_oauth_authentication  = try(var.storage_account.default_to_oauth_authentication, false)
   is_hns_enabled                   = try(var.storage_account.is_hns_enabled, false)
   nfsv3_enabled                    = try(var.storage_account.nfsv3_enabled, false)
+  sftp_enabled                     = try(var.storage_account.sftp_enabled, false)
 
   dynamic "custom_domain" {
     for_each = can(var.storage_account.custom_domain) ? [1] : []
@@ -118,52 +119,52 @@ resource "azurerm_storage_account" "stg" {
   }
 
   dynamic "queue_properties" {
-    for_each = can(var.storage_account.queue_properties) ? [1] : []
+    for_each = lookup(var.storage_account, "queue_properties", false) == false ? [] : [1]
 
     content {
       dynamic "cors_rule" {
-        for_each = can(var.storage_account.queue_properties.cors_rule) ? [1] : []
+        for_each = lookup(var.storage_account.queue_properties, "cors_rule", false) == false ? [] : [1]
 
         content {
-          allowed_headers    = try(var.storage_account.queue_properties.cors_rule.allowed_headers, null)
-          allowed_methods    = try(var.storage_account.queue_properties.cors_rule.allowed_methods, null)
-          allowed_origins    = try(var.storage_account.queue_properties.cors_rule.allowed_origins, null)
-          exposed_headers    = try(var.storage_account.queue_properties.cors_rule.exposed_headers, null)
-          max_age_in_seconds = try(var.storage_account.queue_properties.cors_rule.max_age_in_seconds, null)
+          allowed_headers    = var.storage_account.queue_properties.cors_rule.allowed_headers
+          allowed_methods    = var.storage_account.queue_properties.cors_rule.allowed_methods
+          allowed_origins    = var.storage_account.queue_properties.cors_rule.allowed_origins
+          exposed_headers    = var.storage_account.queue_properties.cors_rule.exposed_headers
+          max_age_in_seconds = var.storage_account.queue_properties.cors_rule.max_age_in_seconds
         }
       }
 
       dynamic "logging" {
-        for_each = can(var.storage_account.queue_properties.logging) ? [1] : []
+        for_each = lookup(var.storage_account.queue_properties, "logging", false) == false ? [] : [1]
 
         content {
-          delete                = try(var.storage_account.queue_properties.logging.delete, null)
-          read                  = try(var.storage_account.queue_properties.logging.read, null)
-          version               = try(var.storage_account.queue_properties.logging.version, null)
-          write                 = try(var.storage_account.queue_properties.logging.write, null)
-          retention_policy_days = try(var.storage_account.queue_properties.logging.retention_policy_days, null)
+          delete                = var.storage_account.queue_properties.logging.delete
+          read                  = var.storage_account.queue_properties.logging.read
+          write                 = var.storage_account.queue_properties.logging.write
+          version               = var.storage_account.queue_properties.logging.version
+          retention_policy_days = try(var.storage_account.queue_properties.logging.retention_policy_days, 7)
         }
       }
 
       dynamic "minute_metrics" {
-        for_each = can(var.storage_account.queue_properties.minute_metrics) ? [1] : []
+        for_each = lookup(var.storage_account.queue_properties, "minute_metrics", false) == false ? [] : [1]
 
         content {
-          enabled               = try(var.storage_account.queue_properties.minute_metrics.enabled, null)
-          version               = try(var.storage_account.queue_properties.minute_metrics.version, null)
+          enabled               = var.storage_account.queue_properties.minute_metrics.enabled
+          version               = var.storage_account.queue_properties.minute_metrics.version
           include_apis          = try(var.storage_account.queue_properties.minute_metrics.include_apis, null)
-          retention_policy_days = try(var.storage_account.queue_properties.minute_metrics.retention_policy_days, null)
+          retention_policy_days = try(var.storage_account.queue_properties.minute_metrics.retention_policy_days, 7)
         }
       }
 
       dynamic "hour_metrics" {
-        for_each = can(var.storage_account.queue_properties.hour_metrics) ? [1] : []
+        for_each = lookup(var.storage_account.queue_properties, "hour_metrics", false) == false ? [] : [1]
 
         content {
-          enabled               = try(var.storage_account.queue_properties.hour_metrics.enabled, null)
-          version               = try(var.storage_account.queue_properties.hour_metrics.version, null)
+          enabled               = var.storage_account.queue_properties.hour_metrics.enabled
+          version               = var.storage_account.queue_properties.hour_metrics.version
           include_apis          = try(var.storage_account.queue_properties.hour_metrics.include_apis, null)
-          retention_policy_days = try(var.storage_account.queue_properties.hour_metrics.retention_policy_days, null)
+          retention_policy_days = try(var.storage_account.queue_properties.hour_metrics.retention_policy_days, 7)
         }
       }
     }
@@ -192,7 +193,7 @@ resource "azurerm_storage_account" "stg" {
     content {
       bypass         = try(var.storage_account.network.bypass, [])
       default_action = try(var.storage_account.network.default_action, "Deny")
-      ip_rules       = try(var.storage_account.network.ip_rules, [])
+      ip_rules       = try(var.storage_account.network.ip_rules, null)
       virtual_network_subnet_ids = try(var.storage_account.network.subnets, null) == null ? null : [
         for key, value in var.storage_account.network.subnets : can(value.remote_subnet_id) ? value.remote_subnet_id : var.vnets[try(value.lz_key, var.client_config.landingzone_key)][value.vnet_key].subnets[value.subnet_key].id
       ]
@@ -220,15 +221,32 @@ resource "azurerm_storage_account" "stg" {
     }
   }
 
-  dynamic "routing" {
-    for_each = lookup(var.storage_account, "routing", false) == false ? [] : [1]
-
-    content {
-      publish_internet_endpoints  = try(var.storage_account.routing.publish_internet_endpoints, false)
-      publish_microsoft_endpoints = try(var.storage_account.routing.publish_microsoft_endpoints, false)
-      choice                      = try(var.storage_account.routing.choice, "MicrosoftRouting")
-    }
+  routing {
+    publish_internet_endpoints  = try(var.storage_account.routing.publish_internet_endpoints, false)
+    publish_microsoft_endpoints = try(var.storage_account.routing.publish_microsoft_endpoints, false)
+    choice                      = try(var.storage_account.routing.choice, "MicrosoftRouting")
   }
+
+  /*share_properties {
+    cors_rule {
+      allowed_headers = try(var.storage_account.share_properties.cors_rule.allowed_headers, null)
+      allowed_methods = try(var.storage_account.share_properties.cors_rule.allowed_methods, null)
+      allowed_origins = try(var.storage_account.share_properties.cors_rule.allowed_origins, null)
+      exposed_headers = try(var.storage_account.share_properties.cors_rule.exposed_headers, null)
+      max_age_in_seconds = try(var.storage_account.share_properties.cors_rule.max_age_in_seconds, null)
+    } 
+    retention_policy {
+      days = try(var.storage_account.share_properties.retention_policy.days, null)
+    }
+    smb {
+      versions = try(var.storage_account.share_properties.smb.versions, null)
+      authentication_types = try(var.storage_account.share_properties.smb.authentication_types, null)
+      kerberos_ticket_encryption_type = try(var.storage_account.share_properties.smb.kerberos_ticket_encryption_type, null)
+      channel_encryption_type = try(var.storage_account.share_properties.smb.channel_encryption_type, null)
+      multichannel_enabled = try(var.storage_account.share_properties.smb.multichannel_enabled, null)
+    } 
+  }
+  */
 
   lifecycle {
     ignore_changes = [
