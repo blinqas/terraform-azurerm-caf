@@ -1,21 +1,21 @@
-
 locals {
-  global_settings = merge(var.global_settings, var.custom_role.global_settings)
+  settings = merge(var.global_settings, try(var.custom_role.settings, {}))
 }
 
 resource "azurecaf_name" "custom_role" {
+  count         = try(local.settings.bypass_azurecaf_name, false) ? 0 : 1
   name          = var.custom_role.name
   resource_type = "azurerm_resource_group"
   #TODO: need to be changed to appropriate resource (no caf reference for now)
-  prefixes      = local.global_settings.prefixes
-  random_length = local.global_settings.random_length
-  clean_input   = true
-  passthrough   = local.global_settings.passthrough
-  use_slug      = local.global_settings.use_slug
+  prefixes      = local.settings.prefixes
+  random_length = local.settings.random_length
+  clean_input   = try(local.settings.clean_input, true)
+  passthrough   = local.settings.passthrough
+  use_slug      = local.settings.use_slug
 }
 
 resource "azurerm_role_definition" "custom_role" {
-  name = azurecaf_name.custom_role.result
+  name = try(local.settings.bypass_azurecaf_name, false) ? var.custom_role.name : azurecaf_name.custom_role[0].result
 
   # TODO: refactor scope to include other scopes like RG, resources.
   scope       = lookup(var.custom_role, "scope", var.subscription_primary)
