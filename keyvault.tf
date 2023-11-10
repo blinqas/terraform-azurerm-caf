@@ -31,7 +31,7 @@ module "keyvault_access_policies" {
   keyvault_key    = each.key
   keyvaults       = local.combined_objects_keyvaults
   access_policies = each.value
-  azuread_groups  = local.combined_objects_azuread_groups  
+  azuread_groups  = local.combined_objects_azuread_groups
   client_config   = local.client_config
   resources = {
     azuread_service_principals        = local.combined_objects_azuread_service_principals
@@ -39,7 +39,7 @@ module "keyvault_access_policies" {
     managed_identities                = local.combined_objects_managed_identities
     mssql_managed_instances           = local.combined_objects_mssql_managed_instances
     mssql_managed_instances_secondary = local.combined_objects_mssql_managed_instances_secondary
-    storage_accounts                  = local.combined_objects_storage_accounts    
+    storage_accounts                  = local.combined_objects_storage_accounts
   }
 }
 
