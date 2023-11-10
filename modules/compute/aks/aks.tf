@@ -69,7 +69,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
     capacity_reservation_group_id = try(var.settings.capacity_reservation_group_id, null)
     custom_ca_trust_enabled       = try(var.settings.custom_ca_trust_enabled, null)
     host_group_id                 = try(var.settings.host_group_id, null)
+    temporary_name_for_rotation   = try(var.settings.temporary_name_for_rotation, null)
 
+    
     pod_subnet_id  = can(var.settings.default_node_pool.pod_subnet_key) == false || can(var.settings.default_node_pool.pod_subnet.key) == false || can(var.settings.default_node_pool.pod_subnet_id) || can(var.settings.default_node_pool.pod_subnet.resource_id) ? try(var.settings.default_node_pool.pod_subnet_id, var.settings.default_node_pool.pod_subnet.resource_id, null) : var.vnets[try(var.settings.lz_key, var.client_config.landingzone_key)][var.settings.vnet_key].subnets[try(var.settings.default_node_pool.pod_subnet_key, var.settings.default_node_pool.pod_subnet.key)].id
     vnet_subnet_id = can(var.settings.default_node_pool.vnet_subnet_id) || can(var.settings.default_node_pool.subnet.resource_id) ? try(var.settings.default_node_pool.vnet_subnet_id, var.settings.default_node_pool.subnet.resource_id) : var.vnets[try(var.settings.vnet.lz_key, var.settings.lz_key, var.client_config.landingzone_key)][try(var.settings.vnet.key, var.settings.vnet_key)].subnets[try(var.settings.default_node_pool.subnet_key, var.settings.default_node_pool.subnet.key)].id
 
@@ -297,17 +299,17 @@ resource "azurerm_kubernetes_cluster" "aks" {
   local_account_disabled = try(var.settings.local_account_disabled, false)
 
   dynamic "maintenance_window" {
-    for_each = try(var.settings.maintenance_window, null) == null ? [] : [1]
+    for_each = can(var.settings.maintenance_window) ? [1] : []
     content {
       dynamic "allowed" {
-        for_each = try(var.settings.maintenance_window.allowed, null) == null ? [] : [1]
+        for_each = can(maintenance_window.value.allowed) ? [1] : []
         content {
           day   = var.settings.maintenance_window.allowed.day
           hours = var.settings.maintenance_window.allowed.hours
         }
       }
       dynamic "not_allowed" {
-        for_each = try(var.settings.maintenance_window.not_allowed, null) == null ? [] : [1]
+        for_each = can(var.settings.maintenance_window.not_allowed) ? [1] : []
         content {
           end   = var.settings.maintenance_window.not_allowed.end
           start = var.settings.maintenance_window.not_allowed.start
