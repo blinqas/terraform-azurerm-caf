@@ -8,7 +8,6 @@ resource "azurerm_web_application_firewall_policy" "wafpolicy" {
   dynamic "custom_rules" {
     for_each = try(var.settings.custom_rules, {})
     content {
-      enable    = custom_rules.value.enable
       name      = custom_rules.value.name
       priority  = custom_rules.value.priority
       rule_type = custom_rules.value.rule_type
