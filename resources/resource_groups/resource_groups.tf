@@ -1,6 +1,6 @@
 
 module "resource_groups" {
-  source = "./modules/resource_group"
+  source = "../../modules/resource_group"
   for_each = {
     for key, value in try(var.resource_groups, {}) : key => value
     if try(value.reuse, false) == false
