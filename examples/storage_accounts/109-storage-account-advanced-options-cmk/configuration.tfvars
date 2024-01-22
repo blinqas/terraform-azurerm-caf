@@ -108,8 +108,14 @@ storage_accounts = {
     }
 
     customer_managed_key = {
+      # lz_key         = "lz where encryption key is created, if remote"
+      # kv_lz_key      = "lz where keyvault is created, might be different from where the key is created, if remote"
       keyvault_key     = "kv1"
       keyvault_key_key = "cmk1"
+      user_assigned_identity = {
+        # lz_key = "lz where user assigned identity is created, if remote"
+        key      = "msi"
+      }
     }
 
     queue_encryption_key_type = "Account"
